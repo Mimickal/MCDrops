@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DropTable {
 
@@ -30,11 +31,57 @@ public class DropTable {
             "   }\n" +
             "}\n";
 
-    private static ArrayList<Drop> drops;
+    private static List<Drop> drops = new ArrayList<>();
 
     public static void loadDropTable() {
         JsonReader json = openDropsTable();
 
+        try {
+            json.beginObject(); // Start of table
+
+            while (json.hasNext()) {
+                Drop nextDrop = parseDrop(json);
+                drops.add(nextDrop);
+            }
+
+            json.endObject(); // End of table
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        System.out.println(drops.toString());
+    }
+
+    private static Drop parseDrop(JsonReader json) throws IOException {
+        Drop drop = new Drop();
+
+        String itemName = json.nextName();
+        drop.setName(itemName);
+
+        json.beginObject(); // Start of drop info object
+
+        while (json.hasNext()) {
+            String propertyName = json.nextName();
+            int propertyVal = json.nextInt();
+
+            if ("weight".equals(propertyName)) {
+                drop.setWeight(propertyVal);
+            } else if ("min".equals(propertyName)) {
+                drop.setMinAmount(propertyVal);
+            } else if ("max".equals(propertyName)) {
+                drop.setMaxAmount(propertyVal);
+            } else if ("count".equals(propertyName)) {
+                drop.setMinAmount(propertyVal);
+                drop.setMaxAmount(propertyVal);
+            } else {
+                throw new RuntimeException("Malformed Drops JSON file: \"" +
+                        propertyName + "\" is not a valid drop property");
+            }
+        }
+
+        json.endObject(); // End of drop info object
+
+        return drop;
     }
 
     /* Attempts to create a reader for the drops table json file.
