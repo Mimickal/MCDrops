@@ -2,20 +2,10 @@ package mimickal.mc.mcdrops;
 
 public class Drop {
 
-    private static final int DEFAULT_VAL = 1;
-    private static final String DEFAULT_ITEM = "sponge";
-
-    private int minAmount;
-    private int maxAmount;
-    private int weight;
-    private String itemName;
-
-    public Drop() {
-        this.minAmount = DEFAULT_VAL;
-        this.maxAmount = DEFAULT_VAL;
-        this.weight = DEFAULT_VAL;
-        this.itemName = DEFAULT_ITEM;
-    }
+    private int minAmount = 1;
+    private int maxAmount = 1;
+    private int weight = 1;
+    private String itemName = "";
 
     public void setMinAmount(int min) {
         this.minAmount = min;
