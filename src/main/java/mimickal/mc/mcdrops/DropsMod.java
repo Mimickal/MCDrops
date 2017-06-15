@@ -20,5 +20,6 @@ public class DropsMod {
     public void init(FMLInitializationEvent event) {
         System.out.println("Loading Drops");
         Config.load();
+        DropTable.loadDropTable();
     }
 }
