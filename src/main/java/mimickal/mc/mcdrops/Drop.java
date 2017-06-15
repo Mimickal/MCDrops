@@ -25,6 +25,10 @@ public class Drop {
         this.maxAmount = max;
     }
 
+    public int getWeight() {
+        return this.weight;
+    }
+
     public void setWeight(int weight) {
         this.weight = weight;
     }

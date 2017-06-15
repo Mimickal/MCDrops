@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class DropTable {
 
@@ -31,7 +32,26 @@ public class DropTable {
             "   }\n" +
             "}\n";
 
+    private static Random rng = new Random();
     private static List<Drop> drops = new ArrayList<>();
+    private static int totalWeight = 0;
+
+    public static Drop getRandomDrop() {
+        int roll = rng.nextInt(totalWeight);
+
+        // Sum drop weights in order until we find the weight interval this roll falls between
+        int currentWeightSum = 0;
+
+        for (Drop curDrop : drops) {
+            if (currentWeightSum <= roll && roll < currentWeightSum + curDrop.getWeight()) {
+                return curDrop;
+            } else {
+                currentWeightSum += curDrop.getWeight();
+            }
+        }
+
+        return null; //TODO default item roll
+    }
 
     public static void loadDropTable() {
         JsonReader json = openDropsTable();
@@ -64,6 +84,7 @@ public class DropTable {
 
             if ("weight".equals(propertyName)) {
                 drop.setWeight(propertyVal);
+                totalWeight += propertyVal;
             } else if ("min".equals(propertyName)) {
                 drop.setMinAmount(propertyVal);
             } else if ("max".equals(propertyName)) {
