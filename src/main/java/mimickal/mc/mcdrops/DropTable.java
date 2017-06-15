@@ -31,6 +31,13 @@ public class DropTable {
             "       \"count\": 16\n" +
             "   }\n" +
             "}\n";
+    private static final Drop DEFAULT_DROP = new Drop();
+    static {
+        DEFAULT_DROP.setMinAmount(1);
+        DEFAULT_DROP.setMaxAmount(1);
+        DEFAULT_DROP.setWeight(0);
+        DEFAULT_DROP.setName("sponge");
+    }
 
     private static Random rng = new Random();
     private static List<Drop> drops = new ArrayList<>();
@@ -50,7 +57,7 @@ public class DropTable {
             }
         }
 
-        return null; //TODO default item roll
+        return DEFAULT_DROP;
     }
 
     public static void loadDropTable() {
