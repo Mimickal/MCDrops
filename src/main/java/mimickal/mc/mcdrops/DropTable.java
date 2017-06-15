@@ -48,8 +48,6 @@ public class DropTable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        System.out.println(drops.toString());
     }
 
     private static Drop parseDrop(JsonReader json) throws IOException {
