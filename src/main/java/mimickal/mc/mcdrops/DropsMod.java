@@ -1,5 +1,6 @@
 package mimickal.mc.mcdrops;
 
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -21,5 +22,6 @@ public class DropsMod {
         System.out.println("Loading Drops");
         Config.load();
         DropTable.loadDropTable();
+        MinecraftForge.EVENT_BUS.register(new DropTickHandler());
     }
 }
