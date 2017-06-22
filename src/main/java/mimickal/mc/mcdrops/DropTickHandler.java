@@ -35,7 +35,9 @@ public class DropTickHandler {
         // Roll and drop a random item for each player
         for (String name : server.getAllUsernames()) {
             EntityPlayerMP player = playerList.getPlayerByUsername(name);
-            ItemStack dropItem = DropTable.getRandomDrop().getItemStack();
+            ItemStack dropItem = DropTable.nextDrop();
+
+            // The boolean value is unused. I have no idea why it's written like that.
             player.dropItem(dropItem, false);
         }
     }
