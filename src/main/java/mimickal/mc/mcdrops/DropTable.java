@@ -1,6 +1,10 @@
 package mimickal.mc.mcdrops;
 
 import com.google.gson.stream.JsonReader;
+import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -36,7 +40,7 @@ public class DropTable {
         DEFAULT_DROP.setMinAmount(1);
         DEFAULT_DROP.setMaxAmount(1);
         DEFAULT_DROP.setWeight(0);
-        DEFAULT_DROP.setName("sponge");
+        DEFAULT_DROP.setItemStack(new ItemStack(Blocks.SPONGE));
     }
 
     private static Random rng = new Random();
@@ -81,7 +85,8 @@ public class DropTable {
         Drop drop = new Drop();
 
         String itemName = json.nextName();
-        drop.setName(itemName);
+        ItemStack itemStack = getItemStackFromName(itemName);
+        drop.setItemStack(itemStack);
 
         json.beginObject(); // Start of drop info object
 
@@ -108,6 +113,27 @@ public class DropTable {
         json.endObject(); // End of drop info object
 
         return drop;
+    }
+
+    /* Create item stack based on item or block name.
+     * We don't know if the drop will be an item or a block,
+     * so we need to check both.
+     */
+    private static ItemStack getItemStackFromName(String name) {
+        ItemStack stack;
+
+        Item item = Item.getByNameOrId(name);
+        Block block = Block.getBlockFromName(name);
+
+        if (item != null) {
+            stack = new ItemStack(item);
+        } else if (block != null) {
+            stack = new ItemStack(block);
+        } else {
+            throw new RuntimeException("Couldn't find a block or an item for \"" + name + "\"");
+        }
+
+        return stack;
     }
 
     /* Attempts to create a reader for the drops table json file.
