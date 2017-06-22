@@ -100,6 +100,29 @@ public class DropTable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        validateDrops();
+    }
+
+    // Sanity check all the values we just read in
+    private static void validateDrops() {
+        for (Drop drop : drops) {
+            if (drop.getMinAmount() > drop.getMaxAmount()) {
+                throw new RuntimeException("Read in a drop where min > max");
+            }
+
+            if (drop.getMinAmount() < 0 || drop.getMaxAmount() < 0) {
+                throw new RuntimeException("Read in a negative drop amount");
+            }
+
+            if (drop.getWeight() < 0) {
+                throw new RuntimeException("Read in a negative weight");
+            }
+
+            if (drop.getWeight() == 0) {
+                System.out.println("WARNING: Read in a drop with a weight of 0. This drop will never be selected");
+            }
+        }
     }
 
     private static Drop parseDrop(JsonReader json) throws IOException {
