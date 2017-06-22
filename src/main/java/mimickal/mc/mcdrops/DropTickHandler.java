@@ -1,14 +1,12 @@
 package mimickal.mc.mcdrops;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DropTickHandler {
 
@@ -34,13 +32,12 @@ public class DropTickHandler {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         PlayerList playerList = server.getPlayerList();
 
-        List<EntityPlayerMP> players = new ArrayList<>();
+        // Roll and drop a random item for each player
         for (String name : server.getAllUsernames()) {
-            players.add(playerList.getPlayerByUsername(name));
+            EntityPlayerMP player = playerList.getPlayerByUsername(name);
+            ItemStack dropItem = DropTable.getRandomDrop().getItemStack();
+            player.dropItem(dropItem, false);
         }
-
-        // TODO drop an item for each player
-        // player.dropItem(Items.APPLE, 1);
     }
 
 }
