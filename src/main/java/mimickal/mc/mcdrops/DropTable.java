@@ -47,7 +47,28 @@ public class DropTable {
     private static List<Drop> drops = new ArrayList<>();
     private static int totalWeight = 0;
 
-    public static Drop getRandomDrop() {
+    public static ItemStack nextDrop() {
+        Drop drop = getRandomDrop();
+
+        // Calculate number of items to drop
+        int min = drop.getMinAmount();
+        int max = drop.getMaxAmount();
+        int amount;
+
+        if (min == max) {
+            amount = min;
+        } else {
+            amount = rng.nextInt(max - min) + min;
+        }
+
+        // Create a copy so we don't carry the calculated drop amount with us
+        ItemStack bundledDrop = drop.getItemStack().copy();
+        bundledDrop.stackSize = amount;
+
+        return bundledDrop;
+    }
+
+    private static Drop getRandomDrop() {
         int roll = rng.nextInt(totalWeight);
 
         // Sum drop weights in order until we find the weight interval this roll falls between
