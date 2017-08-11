@@ -4,6 +4,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
 @Mod(
         modid = DropsMod.MODID,
@@ -23,5 +24,10 @@ public class DropsMod {
         Config.load();
         DropTable.loadDropTable();
         MinecraftForge.EVENT_BUS.register(new DropTickHandler());
+    }
+
+    @EventHandler
+    public void serverLoad(FMLServerStartingEvent event) {
+        event.registerServerCommand(new ReloadCommand());
     }
 }
