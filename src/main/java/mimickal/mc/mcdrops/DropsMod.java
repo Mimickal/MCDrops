@@ -10,7 +10,8 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
         modid = DropsMod.MODID,
         name = DropsMod.NAME,
         version = DropsMod.VERSION,
-        acceptedMinecraftVersions = "[1.10.2]"
+        acceptedMinecraftVersions = "[1.10.2]",
+        acceptableRemoteVersions = "*" // Allows mod to be client optional
 )
 public class DropsMod {
 
