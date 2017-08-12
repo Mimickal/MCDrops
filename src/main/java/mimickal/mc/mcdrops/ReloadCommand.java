@@ -30,7 +30,7 @@ public class ReloadCommand implements ICommand {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return COMMAND_NAME;
+        return "/" + COMMAND_NAME;
     }
 
     @Override
