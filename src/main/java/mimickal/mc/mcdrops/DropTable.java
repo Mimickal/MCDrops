@@ -86,6 +86,9 @@ public class DropTable {
     }
 
     public static void loadDropTable() {
+        drops.clear(); // To avoid duplicate drops on reload
+        totalWeight = 0;
+
         JsonReader json = openDropsTable();
 
         try {

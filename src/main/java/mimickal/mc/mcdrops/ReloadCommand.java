@@ -40,8 +40,8 @@ public class ReloadCommand implements ICommand {
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        // TODO actually implement
         System.out.println("RAN THE COMMAND YO");
+        DropTable.loadDropTable();
     }
 
     @Override
