@@ -26,7 +26,7 @@ public class DropTickHandler {
     /**
      * Selects and drops a random item for all players in the server
      */
-    private void dropItems() {
+    public static void dropItems() {
         // Get a list of currently connected player entities.
         // For some reason, there isn't a built-in method for this.
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();

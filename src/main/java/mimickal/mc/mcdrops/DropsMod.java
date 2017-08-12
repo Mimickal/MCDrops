@@ -34,5 +34,6 @@ public class DropsMod {
     @EventHandler
     public void serverLoad(FMLServerStartingEvent event) {
         event.registerServerCommand(new ReloadCommand());
+        event.registerServerCommand(new ManualDropCommand());
     }
 }
