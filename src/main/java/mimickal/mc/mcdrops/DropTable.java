@@ -153,8 +153,41 @@ public class DropTable {
     private static Drop parseDrop(JsonReader json) throws IOException {
         Drop drop = new Drop();
 
-        String itemName = json.nextName();
-        ItemStack itemStack = getItemStackFromName(itemName);
+        String readName = json.nextName();
+
+        // Item name with subid can be provided several ways (to support mods and subitems)
+        // TODO (I'm aware this block is awful, please forgive me)
+        String itemName;
+        int subid;
+        String[] parts = readName.split(":");
+
+        if (parts.length == 1) {
+            // Must be <vanillaitem>
+            itemName = readName;
+            subid = 0;
+        }
+        else if (parts.length == 2) {
+            try {
+                // Maybe it's <vanillaitem:subid>?
+                itemName = parts[0];
+                subid = Integer.parseInt(parts[1]);
+            } catch (NumberFormatException e) {
+                // It must be <modid:moditem>
+                itemName = readName;
+                subid = 0;
+            }
+        }
+        else if (parts.length == 3) {
+            // Must be <modid:moditem:subid>
+            itemName = String.join(":", parts[0], parts[1]);
+            subid = Integer.parseInt(parts[2]);
+        }
+        else {
+            throw new IOException("Drop name <" + readName + "> in wrong format!");
+        }
+
+
+        ItemStack itemStack = new ItemStack(getItemStackFromName(itemName).getItem(), 1, subid);
         drop.setItemStack(itemStack);
 
         json.beginObject(); // Start of drop info object
