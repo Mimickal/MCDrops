@@ -41,7 +41,8 @@ public class ReloadCommand implements ICommand {
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         DropTable.loadDropTable();
-        DropsMod.LOGGER.info("Reloaded drop table");
+        Config.load();
+        DropsMod.LOGGER.info("Reloaded config and drop table");
     }
 
     @Override
