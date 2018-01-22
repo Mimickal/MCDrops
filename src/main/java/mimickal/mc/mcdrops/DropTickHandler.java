@@ -8,18 +8,33 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
+import java.util.Random;
+
 public class DropTickHandler {
 
+    private static final int MIN_TO_TICK = 60 * 20; // 20 ticks/second * 60 seconds
+
     private long ticks = 0;
+    private long waitTime = getWaitTime();
+    private Random rng = new Random();
 
     @SubscribeEvent
     public void onServerTick(ServerTickEvent event) {
         ticks++;
 
         // Convert drop minutes to ticks
-        if (ticks >= Config.dropInterval * 60 * 20) {
+        if (ticks >= waitTime) {
             ticks = 0;
+            waitTime = getWaitTime();
             dropItems();
+        }
+    }
+
+    private int getWaitTime() {
+        if (Config.variableInterval) {
+            return (rng.nextInt(Config.maxDropInterval) - Config.minDropInterval) * MIN_TO_TICK;
+        } else {
+            return Config.dropInterval * MIN_TO_TICK;
         }
     }
 
