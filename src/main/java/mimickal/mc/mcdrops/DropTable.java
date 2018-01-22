@@ -95,6 +95,10 @@ public class DropTable {
     }
 
     public static void loadDropTable() {
+        // Keep a copy so we can restore the table if there's an error
+        List<Drop> oldTable = new ArrayList<>(drops);
+        int oldWeight = totalWeight;
+
         drops.clear(); // To avoid duplicate drops on reload
         totalWeight = 0;
 
@@ -109,11 +113,13 @@ public class DropTable {
             }
 
             json.endObject(); // End of table
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
-        validateDrops();
+            validateDrops();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            drops = oldTable;
+            totalWeight = oldWeight;
+        }
     }
 
     // Sanity check all the values we just read in
