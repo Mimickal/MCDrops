@@ -6,6 +6,8 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -20,6 +22,7 @@ import java.util.Random;
 
 public class DropTable {
 
+    public static final Logger LOGGER = LogManager.getLogger(DropsMod.MODID);
     private static final String TABLE_PATH = "config/" + DropsMod.MODID + "/dropTable.json";
     private static final String EXAMPLE_DROP_TABLE =
             "{\n" +
@@ -116,7 +119,7 @@ public class DropTable {
 
             validateDrops();
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            LOGGER.warn(e.getMessage());
             drops = oldTable;
             totalWeight = oldWeight;
         }
@@ -125,7 +128,7 @@ public class DropTable {
     // Sanity check all the values we just read in
     private static void validateDrops() {
         if (drops.isEmpty()) {
-            System.out.println("WARNING: drops table is empty");
+            LOGGER.warn("Drops table is empty!");
         }
 
         for (Drop drop : drops) {
@@ -142,7 +145,7 @@ public class DropTable {
             }
 
             if (drop.getWeight() == 0) {
-                System.out.println("WARNING: Read in a drop with a weight of 0. This drop will never be selected");
+                LOGGER.warn("Read in a drop with a weight of 0. This drop will never be selected");
             }
         }
     }
