@@ -27,12 +27,12 @@ public class DropsMod {
     public void init(FMLInitializationEvent event) {
         LOGGER.info("Loading Drops");
         Config.load();
-        DropTable.loadDropTable();
         MinecraftForge.EVENT_BUS.register(new DropTickHandler());
     }
 
     @EventHandler
     public void serverLoad(FMLServerStartingEvent event) {
+        DropTable.loadDropTable();
         event.registerServerCommand(new ReloadCommand());
         event.registerServerCommand(new ManualDropCommand());
     }
