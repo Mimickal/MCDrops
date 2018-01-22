@@ -37,8 +37,10 @@ public class DropTickHandler {
             EntityPlayerMP player = playerList.getPlayerByUsername(name);
             ItemStack dropItem = DropTable.nextDrop();
 
-            // The boolean value is unused. I have no idea why it's written like that.
-            player.dropItem(dropItem, false);
+            if (dropItem != null) {
+                // The boolean value is unused. I have no idea why we need to provide it.
+                player.dropItem(dropItem, false);
+            }
         }
     }
 
