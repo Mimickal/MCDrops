@@ -7,6 +7,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import org.apache.commons.io.FileUtils;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -14,6 +15,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+// Some of this code is horrible and I'm sorry :(
 
 public class DropTable {
 
@@ -47,7 +50,12 @@ public class DropTable {
     private static List<Drop> drops = new ArrayList<>();
     private static int totalWeight = 0;
 
+    @Nullable
     public static ItemStack nextDrop() {
+        if (drops.isEmpty()) {
+            return null;
+        }
+
         Drop drop = getRandomDrop();
 
         // Calculate number of items to drop
@@ -82,6 +90,7 @@ public class DropTable {
             }
         }
 
+        // Buy a lottery ticket if this ever happens
         return DEFAULT_DROP;
     }
 
@@ -109,6 +118,10 @@ public class DropTable {
 
     // Sanity check all the values we just read in
     private static void validateDrops() {
+        if (drops.isEmpty()) {
+            System.out.println("WARNING: drops table is empty");
+        }
+
         for (Drop drop : drops) {
             if (drop.getMinAmount() > drop.getMaxAmount()) {
                 throw new RuntimeException("Read in a drop where min > max");
