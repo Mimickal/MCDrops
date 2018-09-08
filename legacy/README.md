@@ -1,3 +1,17 @@
+History:
+------
+These are the old versions of MCDrops written in C (v1) and Perl (v2).
+I've just added these for fun, to show how this mod has evolved over time.
+
+The C version was written in 2013. It worked by reading player names out of
+the server log then injecting give commands into the screen session running
+the server. This version was not very flexible, and was annoying to update.
+
+The Perl version was written in 2016. It piggybacked off of the hidenames
+mod's list of online players. Drops were given to players by injecting
+give commands into the tmux session running the server. This version was
+much easier to maintain and iterate than the C version.
+
 MC Drops
 ========
 
