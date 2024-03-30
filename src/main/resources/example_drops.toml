@@ -1,0 +1,23 @@
+# Drops a single apple
+[[drops]]
+tag = "minecraft:apple"
+weight = 5
+
+# Drops 16 torches
+[[drops]]
+tag = "minecraft:torch"
+weight = 15
+count = 16
+
+# Drops between 4 and 10 coals
+[[drops]]
+tag = "minecraft:coal"
+weight = 16
+min = 4
+max = 10
+
+# Drops between 1 and 3 gold ingots
+[[drops]]
+tag = "minecraft:gold_ingot"
+weight = 6
+max = 3
