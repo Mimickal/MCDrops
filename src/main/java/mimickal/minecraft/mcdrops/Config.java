@@ -58,7 +58,7 @@ public class Config {
         // TODO can we write out corrections validate makes?
 
         LOGGER.debug("Loaded drop table {}", drops);
-        // TODO notify consumers of drops somehow
+        DropTable.recalculate();
     }
 
     public static final IntValue dropInterval;
@@ -105,11 +105,11 @@ public class Config {
         private List<Drop> drops;
     }
 
-    /** Represents a single drop table in the array of drop tables */
+    /** Represents a single table in the TOML table array. */
     public static class Drop {
         // The warnings in here are a little wrong because they're not
         // accounting for the deserializer populating these fields.
-        
+
         // ObjectConverter needs the transient modifier here, otherwise it tries to populate these fields.
         private static transient final int DEFAULT_WEIGHT = 0;
         private static transient final int DEFAULT_COUNT = 1;
@@ -132,13 +132,34 @@ public class Config {
             );
         }
 
+        public String getTag() {
+            return tag;
+        }
+
+        public Integer getWeight() {
+            return weight;
+        }
+
+        public Integer getCount() {
+            return count;
+        }
+
+        public Integer getMin() {
+            return min;
+        }
+
+        public Integer getMax() {
+            return max;
+        }
+
         /**
          * Apply default values to bad or unprovided config values.
          * Throw exceptions for bad config values we can't safely recover from.
          */
         Drop validate() {
-            if (Strings.isNullOrEmpty(this.tag))
+            if (Strings.isNullOrEmpty(this.tag)) {
                 throw new RuntimeException("Drop tag cannot be empty");
+            }
 
             if (this.weight == null || this.weight <= 0) {
                 LOGGER.warn("Drop {} bad weight {}. Changing to {}", this.tag, this.weight, DEFAULT_WEIGHT);
