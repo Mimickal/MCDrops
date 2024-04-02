@@ -9,6 +9,7 @@ package mimickal.minecraft.mcdrops;
 
 import com.electronwill.nightconfig.core.conversion.ObjectConverter;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.core.io.WritingException;
 import com.electronwill.nightconfig.core.io.WritingMode;
 import com.google.common.base.Strings;
 import com.mojang.logging.LogUtils;
@@ -44,22 +45,26 @@ public class Config {
      * <li>We need the path to the currently loaded world's config directory.
      * <li>We use a TOML table array for drops, which Forge's default config handler doesn't support.
      */
-    public static void loadDropsTable(final ModConfigEvent.Loading event) {
+    public static void loadDropsTable(final ModConfigEvent event) {
         Path configPath = event.getConfig().getFullPath().getParent().resolve(TABLE_NAME);
-        CommentedFileConfig config = CommentedFileConfig.builder(configPath)
+
+        try (CommentedFileConfig config = CommentedFileConfig.builder(configPath)
             .writingMode(WritingMode.REPLACE)
             .defaultData(Config.class.getResource("/example_drops.toml"))
-            .build();
+            .build()
+        ) {
+            config.load();
 
-        config.load();
-
-        DropTable.setDrops(new ObjectConverter().toObject(config, DropList::new)
-            .drops
-            .stream()
-            .map(Config::applyRules)
-            .filter(Objects::nonNull)
-            .toList()
-        );
+            DropTable.setDrops(new ObjectConverter().toObject(config, DropList::new)
+                .drops
+                .stream()
+                .map(Config::applyRules)
+                .filter(Objects::nonNull)
+                .toList()
+            );
+        } catch (WritingException e) {
+            LOGGER.warn("Skipping config load after error. This is expected on first world creation.", e);
+        }
 
         // TODO can we write out corrections the rules make?
     }
