@@ -8,6 +8,7 @@
 package mimickal.minecraft.mcdrops;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Random;
 
 public class DropTickEvent {
@@ -48,11 +50,16 @@ public class DropTickEvent {
 
     /** Selects and drops a random item for all players in the server. */
     public static void dropItems() {
-        ServerLifecycleHooks
+        dropItemsFor(ServerLifecycleHooks
             .getCurrentServer()
             .getPlayerList()
             .getPlayers()
-            .stream()
+        );
+    }
+
+    /** Selects and drops a random item for all players in the given list. */
+    public static void dropItemsFor(List<ServerPlayer> players) {
+        players.stream()
             .filter(LivingEntity::isAlive)
             .forEach(player -> {
                 ItemStack drop = DropTable.nextDrop();
