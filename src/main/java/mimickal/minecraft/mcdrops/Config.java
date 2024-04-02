@@ -39,12 +39,12 @@ public class Config {
     }
 
     /**
-     * The event that loads (or reloads) the drops table. This needs to happen separately for two reasons:
+     * The event that loads the drops table. This needs to happen separately for two reasons:
      * <ol>
      * <li>We need the path to the currently loaded world's config directory.
      * <li>We use a TOML table array for drops, which Forge's default config handler doesn't support.
      */
-    public static void loadDropsTable(ModConfigEvent event) {
+    public static void loadDropsTable(final ModConfigEvent.Loading event) {
         Path configPath = event.getConfig().getFullPath().getParent().resolve(TABLE_NAME);
         CommentedFileConfig config = CommentedFileConfig.builder(configPath)
             .writingMode(WritingMode.REPLACE)
@@ -245,6 +245,11 @@ public class Config {
             entry -> entry.count == null && definedButBad(entry.max),
             entry -> LOGGER.warn("Drop {} bad max {}. Changing max={}", entry.tag, entry.max, DEFAULT_DROP_COUNT),
             entry -> entry.setMax(DEFAULT_DROP_COUNT)
+        ),
+        new DropRule(
+            entry -> entry.count == null && entry.max != null && entry.min == null,
+            entry -> LOGGER.warn("Drop {} max={} without min. Defaulting min={}", entry.tag, entry.max, DEFAULT_DROP_COUNT),
+            entry -> entry.setMin(DEFAULT_DROP_COUNT)
         ),
         new DropRule(
             entry -> entry.count == null && entry.max == null && entry.min != null,
