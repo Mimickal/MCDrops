@@ -17,5 +17,6 @@ public class DropsMod {
     public DropsMod() {
         Config.register();
         MinecraftForge.EVENT_BUS.register(DropTickEvent.class);
+        MinecraftForge.EVENT_BUS.register(ManualDropCommand.class);
     }
 }
