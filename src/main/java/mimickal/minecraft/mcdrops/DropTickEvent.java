@@ -8,6 +8,7 @@
 package mimickal.minecraft.mcdrops;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -51,10 +52,12 @@ public class DropTickEvent {
             .getCurrentServer()
             .getPlayerList()
             .getPlayers()
+            .stream()
+            .filter(LivingEntity::isAlive)
             .forEach(player -> {
                 ItemStack drop = DropTable.nextDrop();
                 player.drop(drop, false); // Not sure why "false", but we need it for this to work.
-                LOGGER.debug("Dropped for {} {}", player, drop);
+                LOGGER.debug("Dropped {} {} {}", player.getScoreboardName(), drop.getCount(), drop.getItem().getRegistryName());
             });
     }
 }
