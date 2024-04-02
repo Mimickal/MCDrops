@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -28,28 +29,29 @@ public class DropTable {
     private static int totalWeight = 0;
 
     /** Recalculates the drop table from {@link Config}. */
-    public static void recalculate() {
-        totalWeight = Config.drops
+    public static void setDrops(List<Config.DropEntry> dropEntries) {
+        totalWeight = dropEntries
             .stream()
-            .mapToInt(Config.Drop::getWeight)
+            .mapToInt(Config.DropEntry::weight)
             .sum();
 
-        drops = Config.drops
+        drops = dropEntries
             .stream()
-            .map(Drop::fromConfigDrop)
-            .filter(Objects::nonNull)
-            .filter(drop -> drop.itemStack != null)
+            .map(Drop::new)
             .toList();
+
+        LOGGER.info("Loaded drop table {}", drops);
     }
 
-    /** Pick a random drop from the channel. */
+    /** Pick a random drop from the config. */
     public static ItemStack nextDrop() {
-        if (drops.isEmpty()) {
+        if (drops.isEmpty() || totalWeight == 0) {
             return DEFAULT_DROP;
         }
 
-        // Sum drop weights in order until we find the weight interval this roll falls between
-        int roll = RNG.nextInt(totalWeight);
+        // Sum drop weights in order until we find the weight interval this roll falls between.
+        // Making it start at 1 ensures we skip drops with a weight of 0.
+        int roll = RNG.nextInt(1, totalWeight);
         int curWeightSum = 0;
 
         for (Drop drop : drops) {
@@ -66,7 +68,7 @@ public class DropTable {
 
     /** Create an {@link ItemStack} based on the given tag. */
     @Nullable
-    private static ItemStack itemStackFromTag(String tagName) {
+    public static ItemStack itemStackFromTag(String tagName) {
         // We don't know if this will be an item or a block, so we need to check both.
         ResourceLocation location = new ResourceLocation(tagName);
         return Optional.ofNullable(ObjectUtils.firstNonNull(
@@ -80,42 +82,37 @@ public class DropTable {
     }
 
     /** A single drop in the table. */
-    public static class Drop {
-
-        @Nullable
-        private static Drop fromConfigDrop(Config.Drop drop) {
-            ItemStack itemStack = itemStackFromTag(drop.getTag());
-            if (itemStack == null) {
-                LOGGER.warn("Skipping drop for unknown tag {}", drop.getTag());
-                return null;
-            }
-
-            return new Drop(
-                itemStackFromTag(drop.getTag()),
-                drop.getWeight(),
-                // This NullPointerException warning is a lie. We verify one of these is defined in Config.
-                Optional.ofNullable(drop.getCount()).orElse(drop.getMin()),
-                Optional.ofNullable(drop.getCount()).orElse(drop.getMax())
+    public record Drop (
+        @NotNull ItemStack itemStack,
+        int weight,
+        int min,
+        int max
+    ) {
+        Drop(Config.DropEntry entry) {
+            //noinspection DataFlowIssue -- Rules in Config ensure these values are all valid
+            this(
+                itemStackFromTag(entry.tag()),
+                entry.weight(),
+                ObjectUtils.firstNonNull(entry.count(), entry.min()),
+                ObjectUtils.firstNonNull(entry.count(), entry.max())
             );
-        }
-
-        private final int min;
-        private final int max;
-        private final int weight;
-        private final ItemStack itemStack;
-
-        private Drop(ItemStack itemStack, int weight, int min, int max) {
-            this.itemStack = itemStack;
-            this.weight = weight;
-            this.min = min;
-            this.max = max;
         }
 
         public ItemStack getRandomStack() {
             ItemStack drop = this.itemStack.copy();
-            // FIXME this is terrible
-            drop.setCount(this.min == this.max ? this.min : RNG.nextInt(this.min, this.max));
+            drop.setCount(this.min == this.max
+                ? this.min
+                : RNG.nextInt(this.min, this.max)
+            );
             return drop;
+        }
+
+        @Override
+        public String toString() {
+            return String.format(
+                "Drop{item=%s, weight=%d, min=%d, max=%d}",
+                this.itemStack.getItem().getRegistryName(), this.weight, this.min, this.max
+            );
         }
     }
 }

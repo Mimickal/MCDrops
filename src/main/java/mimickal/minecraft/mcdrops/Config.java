@@ -19,12 +19,16 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.apache.commons.lang3.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Config {
     /** Registers the main config, and the events that load the drops table. */
@@ -49,32 +53,32 @@ public class Config {
 
         config.load();
 
-        drops = new ObjectConverter().toObject(config, DropList::new)
+        DropTable.setDrops(new ObjectConverter().toObject(config, DropList::new)
             .drops
             .stream()
-            .map(Drop::validate)
-            .toList();
+            .map(Config::applyRules)
+            .filter(Objects::nonNull)
+            .toList()
+        );
 
-        // TODO can we write out corrections validate makes?
-
-        LOGGER.debug("Loaded drop table {}", drops);
-        DropTable.recalculate();
+        // TODO can we write out corrections the rules make?
     }
 
     public static final IntValue dropInterval;
     public static final BooleanValue variableIntervalEnabled;
     public static final IntValue minDropInterval;
     public static final IntValue maxDropInterval;
-    public static List<Drop> drops;
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final String CONFIG_NAME = "settings.toml";
     private static final String TABLE_NAME = "drops.toml";
     private static final ForgeConfigSpec CONFIG_SPEC;
+    private static final int DEFAULT_DROP_COUNT = 1;
+    private static final int DEFAULT_DROP_WEIGHT = 0;
     private static final int DEFAULT_DROP_INTERVAL = 15 * 60; // 15 minutes
+    private static final int DEFAULT_DROP_INTERVAL_MIN = 10 * 60; // 10 minutes
+    private static final int DEFAULT_DROP_INTERVAL_MAX = 20 * 60; // 20 minutes
     private static final boolean DEFAULT_VARIABLE_INTERVAL_ENABLED = false;
-    private static final int DEFAULT_MIN_DROP_INTERVAL = 10 * 60; // 10 minutes
-    private static final int DEFAULT_MAX_DROP_INTERVAL = 20 * 60; // 20 minutes
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -89,11 +93,11 @@ public class Config {
 
         minDropInterval = builder
             .comment("Lower end of variable drop interval range. Does nothing if enable_variable_interval is disabled.")
-            .defineInRange("min_drop_interval", DEFAULT_MIN_DROP_INTERVAL, 1, Integer.MAX_VALUE);
+            .defineInRange("min_drop_interval", DEFAULT_DROP_INTERVAL_MIN, 1, Integer.MAX_VALUE);
 
         maxDropInterval = builder
             .comment("Upper end of variable drop interval range. Does nothing if enable_variable_interval is disabled.")
-            .defineInRange("max_drop_interval", DEFAULT_MAX_DROP_INTERVAL, 1, Integer.MAX_VALUE);
+            .defineInRange("max_drop_interval", DEFAULT_DROP_INTERVAL_MAX, 1, Integer.MAX_VALUE);
 
         CONFIG_SPEC = builder.build();
     }
@@ -102,121 +106,159 @@ public class Config {
 
     /** {@link ObjectConverter} uses this to deserialize the TOML list. */
     private static class DropList {
-        private List<Drop> drops;
+        // ObjectConverter writes this field during deserialization.
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+        private List<DropEntry> drops;
     }
 
     /** Represents a single table in the TOML table array. */
-    public static class Drop {
-        // The warnings in here are a little wrong because they're not
-        // accounting for the deserializer populating these fields.
-
-        // ObjectConverter needs the transient modifier here, otherwise it tries to populate these fields.
-        private static transient final int DEFAULT_WEIGHT = 0;
-        private static transient final int DEFAULT_COUNT = 1;
-
-        // These values are enforced by validate(). This class is only created by ObjectConverter
-        // where we also call validate(), so these tags are correct.
+    public static class DropEntry {
+        // ObjectConverter writes this field during deserialization.
+        @SuppressWarnings("NotNullFieldNotInitialized")
         @NotNull private String tag;
+
+        // ObjectConverter writes this field during deserialization.
+        @SuppressWarnings("NotNullFieldNotInitialized")
         @NotNull private Integer weight;
+
         @Nullable private Integer count;
         @Nullable private Integer min;
         @Nullable private Integer max;
 
-        private Drop() { /* Prevent instantiation */ }
+        private DropEntry() { /* Prevent instantiation */ }
 
-        @Override
-        public String toString() {
-            return String.format(
-                "Drop{tag='%s', weight=%d, count=%d, min=%d, max=%d}",
-                this.tag, this.weight, this.count, this.min, this.max
-            );
+        public String tag() {
+            return this.tag;
         }
 
-        public String getTag() {
-            return tag;
+        public Integer weight() {
+            return this.weight;
         }
 
-        public Integer getWeight() {
-            return weight;
-        }
-
-        public Integer getCount() {
-            return count;
-        }
-
-        public Integer getMin() {
-            return min;
-        }
-
-        public Integer getMax() {
-            return max;
-        }
-
-        /**
-         * Apply default values to bad or unprovided config values.
-         * Throw exceptions for bad config values we can't safely recover from.
-         */
-        Drop validate() {
-            if (Strings.isNullOrEmpty(this.tag)) {
-                throw new RuntimeException("Drop tag cannot be empty");
-            }
-
-            if (this.weight == null || this.weight <= 0) {
-                LOGGER.warn("Drop {} bad weight {}. Changing to {}", this.tag, this.weight, DEFAULT_WEIGHT);
-                this.weight = DEFAULT_WEIGHT;
-            }
-
-            // Only change range values when count is not set, because count takes precedence over range.
-            // Why? Because I say so.
-            if (this.count == null) {
-                if (this.min == null && this.max == null) {
-                    LOGGER.info("Drop {} missing count. Defaulting count={}", this.tag, DEFAULT_COUNT);
-                    this.count = DEFAULT_COUNT;
-                }
-
-                if (this.min != null && this.min <= 0) {
-                    LOGGER.warn("Drop {} bad min {}. Changing min={}", this.tag, this.min, DEFAULT_COUNT);
-                    this.min = DEFAULT_COUNT;
-                }
-
-                if (this.max != null && this.max <= 0) {
-                    LOGGER.warn("Drop {} bad max {}. Changing max={}", this.tag, this.max, DEFAULT_COUNT);
-                    this.max = DEFAULT_COUNT;
-                }
-
-                // Use sane defaults when missing min or max in a range
-                if (this.min != null && this.max == null) {
-                    LOGGER.warn("Drop {} min={} without max. Defaulting max={}", this.tag, this.min, this.min);
-                    this.max = this.min;
-                }
-
-                if (this.min == null && this.max != null) {
-                    LOGGER.info("Drop {} missing min. Defaulting min={}", this.tag, DEFAULT_COUNT);
-                    this.min = DEFAULT_COUNT;
-                }
-
-                if (this.min != null && this.max != null && this.max < this.min) {
-                    LOGGER.warn("Drop {} max={} < min={}. Changing max={}", this.tag, this.max, this.min, this.min);
-                    this.max = this.min;
-                }
-            } else {
-                if (this.count <= 0) {
-                    LOGGER.warn("Drop {} bad count {}. Changing count={}", this.tag, this.count, DEFAULT_COUNT);
-                    this.count = DEFAULT_COUNT;
-                }
-
-                // Warn when range and count are used together.
-                // Don't need to do anything else since we'll just use count anyway.
-                if (this.min != null) {
-                    LOGGER.warn("Drop {} conflicting count={} and min={}. Using count", this.tag, this.count, this.min);
-                }
-
-                if (this.max != null) {
-                    LOGGER.warn("Drop {} conflicting count={} and max={}. Using count", this.tag, this.count, this.max);
-                }
-            }
-
+        public DropEntry setWeight(Integer newWeight) {
+            this.weight = newWeight;
             return this;
         }
+
+        public Integer count() {
+            return this.count;
+        }
+
+        public DropEntry setCount(Integer newCount) {
+            this.count = newCount;
+            return this;
+        }
+
+        public Integer min() {
+            return this.min;
+        }
+
+        public DropEntry setMin(Integer newMin) {
+            this.min = newMin;
+            return this;
+        }
+
+        public Integer max() {
+            return this.max;
+        }
+
+        public DropEntry setMax(Integer newMax) {
+            this.max = newMax;
+            return this;
+        }
+    }
+
+    /**
+     * Contains a rule that all {@link DropEntry} need to follow.
+     * @param test Function that tests whether a {@link DropEntry} is correct.
+     * @param log Function that prints a warning to the log when {@link #test} fails.
+     * @param mutate Function that modifies the entry when {@link #test} fails.
+     *               Returning {@code null} implies we can't automatically fix the {@link DropEntry} and should not use it.
+     */
+    private record DropRule(
+        Function<DropEntry, Boolean> test,
+        Consumer<DropEntry> log,
+        Function<DropEntry, @Nullable DropEntry> mutate
+    ) {}
+
+    /** Applies all the rules to the given entry, logging if any entry fails a rule. See {@link #RULES}. */
+    private static DropEntry applyRules(DropEntry entry) {
+        for (DropRule rule : RULES) {
+            if (rule.test.apply(entry)) {
+                rule.log.accept(entry);
+                entry = rule.mutate.apply(entry);
+
+                if (entry == null) {
+                    return null;
+                }
+            }
+        }
+        return entry;
+    }
+
+    /**
+     * Rules all {@link DropEntry}s need to follow.<br>
+     * If you think this is bad, you should see the conditional chain it's replacing.
+     */
+    private static final List<DropRule> RULES = List.of(
+        new DropRule(
+            entry -> Strings.isNullOrEmpty(entry.tag),
+            entry -> LOGGER.warn("Ignoring drop with missing tag"),
+            entry -> null
+        ),
+        new DropRule(
+            entry -> DropTable.itemStackFromTag(entry.tag) == null,
+            (entry -> LOGGER.warn("Cannot find item with tag {}", entry.tag)),
+            entry -> null
+        ),
+        new DropRule(
+            entry -> entry.weight == null || entry.weight <= 0,
+            entry -> LOGGER.warn("Drop {} bad weight {}. Changing to {}", entry.tag, entry.weight, DEFAULT_DROP_WEIGHT),
+            entry -> entry.setWeight(DEFAULT_DROP_WEIGHT)
+        ),
+        new DropRule(
+            entry -> ObjectUtils.allNotNull(entry.count, entry.min),
+            entry -> LOGGER.warn("Drop {} conflicting count={} and min={}. Using count", entry.tag, entry.count, entry.min),
+            entry -> entry
+        ),
+        new DropRule(
+            entry -> ObjectUtils.allNotNull(entry.count, entry.max),
+            entry -> LOGGER.warn("Drop {} conflicting count={} and max={}. Using count", entry.tag, entry.count, entry.max),
+            entry -> entry
+        ),
+        new DropRule(
+            entry -> ObjectUtils.allNull(entry.count, entry.min, entry.max),
+            entry -> LOGGER.info("Drop {} missing count. Defaulting count={}", entry.tag, DEFAULT_DROP_COUNT),
+            entry -> entry.setCount(DEFAULT_DROP_COUNT)
+        ),
+        new DropRule(
+            entry -> definedButBad(entry.count),
+            entry -> LOGGER.warn("Drop {} bad count {}. Changing count={}", entry.tag, entry.count, DEFAULT_DROP_COUNT),
+            entry -> entry.setCount(DEFAULT_DROP_COUNT)
+        ),
+        new DropRule(
+            entry -> entry.count == null && definedButBad(entry.min),
+            entry -> LOGGER.warn("Drop {} bad min {}. Changing min={}", entry.tag, entry.min, DEFAULT_DROP_COUNT),
+            entry -> entry.setMin(DEFAULT_DROP_COUNT)
+        ),
+        new DropRule(
+            entry -> entry.count == null && definedButBad(entry.max),
+            entry -> LOGGER.warn("Drop {} bad max {}. Changing max={}", entry.tag, entry.max, DEFAULT_DROP_COUNT),
+            entry -> entry.setMax(DEFAULT_DROP_COUNT)
+        ),
+        new DropRule(
+            entry -> entry.count == null && entry.max == null && entry.min != null,
+            entry -> LOGGER.warn("Drop {} min={} without max. Defaulting max={}", entry.tag, entry.min, entry.min),
+            entry -> entry.setMax(entry.min)
+        ),
+        new DropRule(
+            entry -> entry.count == null && entry.min != null && entry.max != null && entry.max < entry.min,
+            entry -> LOGGER.warn("Drop {} max={} < min={}. Changing max={}", entry.tag, entry.max, entry.min, entry.min),
+            entry -> entry.setMax(entry.min)
+        )
+    );
+
+    private static boolean definedButBad(Integer value) {
+        return value != null && value <= 0;
     }
 }
