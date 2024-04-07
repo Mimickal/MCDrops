@@ -3,21 +3,125 @@
 tag = "minecraft:apple"
 weight = 5
 
-# Drops 16 torches
+# Drops 2 grass blocks
+[[drops]]
+tag = "minecraft:grass"
+weight = 4
+count = 2
+
+# Drops between 5 and 15 torches
 [[drops]]
 tag = "minecraft:torch"
 weight = 15
-count = 16
+min = 5
+max = 15
 
-# Drops between 4 and 10 coals
+# Drops between 1 and 10 coal
 [[drops]]
 tag = "minecraft:coal"
 weight = 16
-min = 4
+min = 1
 max = 10
 
-# Drops between 1 and 3 gold ingots
+[[drops]]
+tag = "minecraft:chainmail_helmet"
+weight = 6
+
+[[drops]]
+tag = "minecraft:chainmail_chestplate"
+weight = 6
+
+[[drops]]
+tag = "minecraft:chainmail_leggings"
+weight = 6
+
+[[drops]]
+tag = "minecraft:chainmail_boots"
+weight = 6
+
+[[drops]]
+tag = "minecraft:clock"
+weight = 2
+
+[[drops]]
+tag = "minecraft:compass"
+weight = 2
+
+[[drops]]
+tag = "minecraft:cooked_porkchop"
+weight = 16
+min = 2
+max = 5
+
+[[drops]]
+tag = "minecraft:cookie"
+weight = 8
+min = 2
+max = 5
+
+[[drops]]
+tag = "minecraft:deadbush"
+weight = 2
+
+[[drops]]
+tag = "minecraft:diamond"
+weight = 1
+
+[[drops]]
+tag = "minecraft:egg"
+weight = 8
+max = 3
+
+[[drops]]
+tag = "minecraft:emerald"
+weight = 2
+
+[[drops]]
+tag = "minecraft:gold_block"
+weight = 4
+
 [[drops]]
 tag = "minecraft:gold_ingot"
 weight = 6
 max = 3
+
+[[drops]]
+tag = "minecraft:iron_block"
+weight = 5
+
+[[drops]]
+tag = "minecraft:iron_ingot"
+weight = 8
+min = 3
+max = 9
+
+[[drops]]
+tag = "minecraft:iron_sword"
+weight = 10
+
+[[drops]]
+tag = "minecraft:planks"
+weight = 6
+min = 5
+max = 10
+
+[[drops]]
+tag = "minecraft:redstone"
+weight = 15
+min = 3
+max = 8
+
+[[drops]]
+tag = "minecraft:sapling"
+weight = 6
+max = 3
+
+[[drops]]
+tag = "minecraft:stick"
+weight = 15
+min = 4
+max = 10
+
+[[drops]]
+tag = "minecraft:stone_axe"
+weight = 12
