@@ -93,7 +93,7 @@ public class Config {
             .defineInRange("drop_interval", DEFAULT_DROP_INTERVAL, 1, Integer.MAX_VALUE);
 
         variableIntervalEnabled = builder
-            .comment("Make drop interval a random range instead of a static value")
+            .comment("Make drop interval a random range instead of a constant value")
             .define("enable_variable_interval", DEFAULT_VARIABLE_INTERVAL_ENABLED);
 
         minDropInterval = builder
