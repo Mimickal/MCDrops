@@ -8,6 +8,7 @@
 package mimickal.minecraft.mcdrops;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -25,13 +26,21 @@ public class DropTickEvent {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Random RNG = new Random();
 
-    private static Instant nextDropTime = getNextWaitInstant();
+    private static MinecraftServer currentServer;
+    private static Instant nextDropTime;
 
     /** Periodically drops items for all players on the server. */
     @SubscribeEvent
     public static void periodicallyDropItems(final TickEvent.ServerTickEvent event) {
         if (event.side.isClient()) return;
         if (event.phase == TickEvent.Phase.END) return;
+
+        // Recalculate the drop timer when a new world is loaded (and thus, world-specific config changes).
+        if (currentServer != ServerLifecycleHooks.getCurrentServer()) {
+            currentServer = ServerLifecycleHooks.getCurrentServer();
+            nextDropTime = getNextWaitInstant();
+        }
+
         if (Instant.now().isBefore(nextDropTime)) return;
 
         nextDropTime = getNextWaitInstant();
