@@ -9,7 +9,7 @@ displayName="Minecraft Drops"
 # A URL to query for updates for this mod. See the JSON update specification https://mcforge.readthedocs.io/en/latest/gettingstarted/autoupdate/
 # TODO updateJSONURL="https://change.me.example.invalid/updates.json" #optional
 displayURL="https://github.com/Mimickal/MCDrops"
-# TODO logoFile="examplemod.png" #optional
+logoFile="mcdrops_logo.png"
 credits="The Funbox crew for being my guinea pigs"
 authors="Mimickal"
 description="Periodically drop random items for active players"
